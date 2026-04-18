@@ -184,7 +184,59 @@ ifelse(avg_wait_1 <= 10, "YES", "NO")))
 cat("========================================\n")
 ```
 
+---
 
+# Scenario 2: Additional Doctor (4 Triage Doctors)
+
+```{r}
+
+# Run Scenario 2 - set seed for fair comparison 
+
+sim2 <- simulate_er(n_patients = 500,
+                    arrival_rate = 12/60,
+                    service_mean = 12,
+                    n_doctors = 4,
+                    seed = 42)
+
+# Display first 10 rows
+
+knitr::kable(head(sim2, 10),
+             caption = "Scenario 2 - First 10 Patients (4 Doctors)",
+             digits = 2)
+```
+
+---
+
+## Performance Metrics - Scenario 2
+
+```{r}
+
+avg_wait_2   <- mean(sim2$Wait_Time)
+avg_system_2 <- mean(sim2$System_Time)
+max_wait_2   <- max(sim2$Wait_Time)
+pct_exceed_2 <- mean(sim2$Wait_Time > 10) * 100
+avg_queue_2  <- lambda_per_min * avg_wait_2
+
+
+cat("  SCENARIO 2: 4 Triage Doctors\n")
+
+cat("========================================\n")
+
+cat(sprintf("  Average Waiting Time  : %.2f minutes\n", avg_wait_2))
+
+cat(sprintf("  Average System Time   : %.2f minutes\n", avg_system_2))
+
+cat(sprintf("  Maximum Waiting Time  : %.2f minutes\n", max_wait_2))
+
+cat(sprintf("  Average Queue Length  : %.2f patients\n", avg_queue_2))
+
+cat(sprintf("  %% Patients Waiting >10 min : %.1f%%\n", pct_exceed_2))
+
+cat(sprintf("  Threshold Met (<=10 min)   : %s\n",
+            ifelse(avg_wait_2 <= 10, "YES", "NO")))
+
+cat("========================================\n")
+```
 
 
 
