@@ -58,7 +58,7 @@ For $c = 4$: $\rho = \frac{12}{20} = 0.60$
 #   seed: random seed for reproducibility of results
 
 simulate_er <- function(n_patients = 500, 
-                        arrival_time = 12/60, # patients per minute
+                        arrival_rate = 12/60, # patients per minute
                         service_mean = 12, # average minutes per patient
                         n_doctors = 3,
                         seed = 42){
@@ -126,6 +126,85 @@ simulate_er <- function(n_patients = 500,
   return(results)
 }
 ```
+
+---
+
+# Scenario 1: Current System (3 Triage Doctors)
+
+```{r}
+
+# Run Scenario 1
+sim1 <- simulate_er(n_patients = 500,
+                    arrival_rate = 12/60,
+                    service_mean = 12,
+                    n_doctors = 3, 
+                    seed = 42)
+
+
+# Display first 10 rows for inspection
+
+knitr:: kable(head(sim1, 10),
+              caption = "Scenario 1 - First 10 Patients (3 Doctors)",
+              digits = 2)
+```
+
+---
+
+## Performance Metrics - Scenario 1
+
+```{r}
+
+# Key performance metrics
+avg_wait_1 <- mean(sim1$Wait_Time)
+avg_system_1 <- mean(sim1$System_Time)
+max_wait_1 <- max(sim1$Wait_Time)
+pct_exceed_1 <- mean(sim1$Wait_Time > 10) * 100
+
+# Average Queue Length (Little's Law): L_q = Lambda * W_q
+lambda_per_min <- 12/60
+avg_queue_1 <- lambda_per_min * avg_wait_1
+
+cat("  SCENARIO 1: 3 Triage Doctors\n")
+
+cat("========================================\n")
+
+cat(sprintf("  Average Waiting Time : %.2f minutes\n", avg_wait_1))
+
+cat(sprintf("  Average System Time  : %.2f minutes\n", avg_system_1))
+
+cat(sprintf("  Maximum Waiting Time : %.2f minutes\n", max_wait_1))
+
+cat(sprintf("  Average Queue Length : %.2f patients\n", avg_queue_1))
+
+cat(sprintf("  %% Patients Waiting >10 min : %.1f%%\n", pct_exceed_1))
+
+cat(sprintf("  Threshold Met (<=10 min) : %s\n",
+ifelse(avg_wait_1 <= 10, "YES", "NO")))
+
+cat("========================================\n")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
