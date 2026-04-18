@@ -1,35 +1,27 @@
 ---
-title: 'CM 2605: Simulation and Modeling Techniques'
-author: "Vishara Jayalath"
-date: "2026-04-18"
-output: html_document
+title: "CM 2605: Simulation and Modeling Techniques"
+subtitle: "CW Part 01 — Simulation and Stochastic Analysis of Hospital Emergency Resources"
+author: "J. A. N. Vishara Jayalath | RGU: 2425578 | IIT: 20240184"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-## R Markdown
+# Simulation and Stochastic Analysis of Hospital Emergency Resources
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Introduction
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+This report presents a discrete-event simulation of the Emergency Room (ER) triage process at a hospital experiencing overcrowding during its weekend shifts. The simulation models patient arrivals and service provided using appropriate stochastic distributions, and evaluates whether the current staffing level of 3 triage doctors meets the hospital board's mandated threshold of an average patient waiting time not exceeding 10 minutes.
 
-```{r cars}
-summary(cars)
-```
+A second scenario is also simulated with 4 triage doctors to assess and compare whether the additional resource resolves the overcrowding issue.
 
-## Including Plots
+---
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
-```{r}
-HELLO
-```
-
+# Model Parameters
