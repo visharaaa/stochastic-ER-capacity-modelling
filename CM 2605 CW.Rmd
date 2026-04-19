@@ -183,6 +183,13 @@ ifelse(avg_wait_1 <= 10, "YES", "NO")))
 
 cat("========================================\n")
 ```
+The simulation shows an average waiting time of 6.84 minutes, which is below the 10-minute threshold, indicating that the system does indeed meet the requirement on average.
+
+However, performance is not consistent as around 24.6% of patients wait longer than 10 minutes. The maximum waiting time reaches 52.06 minutes as well, highlighting significant variability.
+
+The average system time of 19.45 minutes and queue length of 1.37 patients suggest moderate congestion especially during peak periods.
+
+Overall, while the system meets the target on average, it operates close to capacity and may not reliably provide acceptable service for all patients.
 
 ---
 
