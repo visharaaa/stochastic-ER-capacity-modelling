@@ -244,7 +244,46 @@ cat(sprintf("  Threshold Met (<=10 min)   : %s\n",
 
 cat("========================================\n")
 ```
+---
 
+# Comparative Analysis
+
+```{r}
+
+# Summary table
+
+comparison <- data.frame(
+  Metric = c ("Number of Doctors",
+              "Average Waiting Time (min)",
+              "Average System Time (min)",
+              "Maximum Waiting Time (min)",
+              "Average Queue Length (patients)",
+              "% Patients Waiting > 10 min",
+              "10 Minute Threshold Met?"),
+  Scenario_1_3_Doctors = c(
+    3,
+    round(avg_wait_1, 2),
+    round(avg_system_1, 2),
+    round(max_wait_1, 2),
+    round(avg_queue_1, 2),
+    round(pct_exceed_1, 2),
+    ifelse(avg_wait_1 <= 10, "YES", "NO")
+  ),
+  Scenario_2_4_Doctors = c(
+    4,
+    round(avg_wait_2, 2),
+    round(avg_system_2, 2),
+    round(max_wait_2, 2),
+    round(avg_queue_2, 2),
+    round(pct_exceed_2, 2),
+    ifelse(avg_wait_2 <= 10, "YES", "NO")
+  )
+)
+
+knitr::kable(comparison, 
+              col.names = c("Metric", "Scenario 1 (3 Doctors)", "Scenario 2 (4 Doctors"),
+              caption = "Comparison of Key Performance Metrics Across Scenarios")
+```
 
 
 
