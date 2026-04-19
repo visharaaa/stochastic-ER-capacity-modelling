@@ -3,26 +3,20 @@ title: "CM 2605: Simulation and Modeling Techniques"
 subtitle: "CW Part 01 — Simulation and Stochastic Analysis of Hospital Emergency Resources"
 author: "J. A. N. Vishara Jayalath | RGU: 2425578 | IIT: 20240184"
 date: "`r Sys.Date()`"
-output:
-  pdf_document:
-    toc: true
-    number_sections: true
-    latex_engine: xelatex
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-# Simulation and Stochastic Analysis of Hospital Emergency Resources
+# CW Part 01 — Simulation and Stochastic Analysis of Hospital Emergency Resources
 
 # Introduction
 
 This report presents a discrete-event simulation of the Emergency Room (ER) triage process at a hospital experiencing overcrowding during its weekend shifts. The simulation models patient arrivals and service provided using appropriate stochastic distributions, and evaluates whether the current staffing level of 3 triage doctors meets the hospital board's mandated threshold of an average patient waiting time not exceeding 10 minutes.
 
 A second scenario is also simulated with 4 triage doctors to assess and compare whether the additional resource resolves the overcrowding issue.
-
----
 
 # Model Parameters
 
@@ -41,294 +35,235 @@ For $c = 3$: $\rho = \frac{12}{15} = 0.80$
 
 For $c = 4$: $\rho = \frac{12}{20} = 0.60$
 
----
-
-# Simulation Algorithm
-
-## Helper Function: Multi-Server Queue Simulation
+# Model Input Parameters
 
 ```{r}
+arrival_rate <- 12            # patients per hour
+service_time_mean <- 12       # minutes
+service_rate <- 60 / service_time_mean  # patients per hour
 
-# Multi- Server Queue Simulation (M/M/c)
-
-# Arguments:
-#   n_patients: number of patients to simulate
-#   arrival_rate: average patients per minute (lambda)
-#   service_rate: average service time in minutes per patient (1/mu)
-#   seed: random seed for reproducibility of results
-
-simulate_er <- function(n_patients = 500, 
-                        arrival_rate = 12/60, # patients per minute
-                        service_mean = 12, # average minutes per patient
-                        n_doctors = 3,
-                        seed = 42){
-  set.seed(seed)
-  
-  
-  
-  # Step 1: Generate inter-arrival times (Exponential from Poisson process)
-  # If arrivals are Poisson (lambda), inter-arrival gaps are Exp(lambda)
-  inter_arrivals <- rexp(n = n_patients, rate = arrival_rate)
-  
-  # Step 2: Compute cumulative arrival times
-  arrival_times <- cumsum(inter_arrivals)
-  
-  # Step 3: Generate service durations for each patient 
-  service_durations <- rexp(n = n_patients, rate = 1 / service_mean)
-  
-  # Step 4: Track when each doctor becomes free
-  # Initialize all doctors as free from time 0
-  doctor_free_at <- rep(0,n_doctors)
-  
-  # Step 5: Pre-allocate result vectors
-  service_start <- numeric(n_patients)
-  service_end <- numeric (n_patients)
-  wait_time <- numeric (n_patients)
-  system_time <- numeric (n_patients)
-  
-  # Step 6: Process each patient sequentially (FCFS)
-  
-  for (i in 1:n_patients){
-    
-    # Find the doctor who becomes free earliest
-    earliest_doctor <- which.min(doctor_free_at)
-    doctor_available_at <- doctor_free_at[earliest_doctor]
-    
-    # Patient can only start service when BOTH the patient has arrived 
-    # AND a doctor is available - whichever is later
-    service_start[i] <- max(arrival_times[i], doctor_available_at)
-    
-    # Service ends after their service duration
-    service_end[i] <- service_start[i] + service_durations[i]
-    
-    # Update that doctor's next free time
-    doctor_free_at[earliest_doctor] <- service_end[i]
-    
-    # Compute waiting time (time spent in queue before being seen)
-    wait_time[i] <- service_start[i] - arrival_times[i]
-    
-    # Compute total system time (wait + service)
-    system_time[i] <- service_end[i] - arrival_times[i]
-  }
-  
-  # Step 7: Return results as a data frame
-  
-  results <- data.frame(
-    Patient = 1:n_patients,
-    Arrival_Time = round(arrival_times, 4),
-    Service_Start = round(service_start, 4),
-    Service_End = round(service_end, 4),
-    Service_Time = round(service_durations, 4),
-    Wait_Time = round(wait_time, 4),
-    System_Time = round(system_time, 4)
-  )
-  
-  return(results)
-}
+num_doctors <- 3
+n_patients <- 500
 ```
-
----
 
 # Scenario 1: Current System (3 Triage Doctors)
 
 ```{r}
+set.seed(123) # ensures reproducibility 
 
-# Run Scenario 1
-sim1 <- simulate_er(n_patients = 500,
-                    arrival_rate = 12/60,
-                    service_mean = 12,
-                    n_doctors = 3, 
-                    seed = 42)
+# Step 01 - Generate Arrivals
 
+# Generate interarrival times (hours)
+interarrival_times <- rexp(n_patients, rate = arrival_rate)
 
-# Display first 10 rows for inspection
+# Compute arrival times
+arrival_time <- cumsum(interarrival_times)
 
-knitr:: kable(head(sim1, 10),
-              caption = "Scenario 1 - First 10 Patients (3 Doctors)",
-              digits = 2)
+# Step 02 - Generate Service Times
+
+# Generate service times (hours)
+service_time <- rexp(n_patients, rate = service_rate)
+
+# Step 03 - Initialize Tracking Variables
+
+# Initialize vectors
+service_start <- numeric(n_patients)
+service_end <- numeric(n_patients)
+waiting_time <- numeric(n_patients) # time spent in queue before service
+system_time <- numeric(n_patients) # total time in system (wait + service)
+
+# Track availability of each doctor
+doctor_available_time <- rep(0, num_doctors)
+
+# Step 04 - Simulation Loop (FCFS Logic)
+
+for (i in 1:n_patients) {
+  
+  # Find doctor who becomes available first
+  next_doctor <- which.min(doctor_available_time)
+  
+  # Service starts at max(arrival, doctor availability)
+  service_start[i] <- max(arrival_time[i], doctor_available_time[next_doctor])
+  
+  # Service ends after service time
+  service_end[i] <- service_start[i] + service_time[i]
+  
+  # Update doctor's next available time
+  doctor_available_time[next_doctor] <- service_end[i]
+  
+  # Waiting time (queue time)
+  waiting_time[i] <- service_start[i] - arrival_time[i]
+  
+  # Total time in system
+  system_time[i] <- service_end[i] - arrival_time[i]
+}
+
+# Step 05 - Store Results
+
+# Combine into a dataset
+simulation_data <- data.frame(
+  Patient_ID = 1:n_patients,
+  Arrival_Time = arrival_time,
+  Service_Start_Time = service_start,
+  Service_End_Time = service_end,
+  Waiting_Time = waiting_time,
+  System_Time = system_time
+)
+
+# Display first 10 rows 
+knitr::kable(
+  head(simulation_data, 10),
+  caption = "First 10 Patients in Simulation (M/M/c Queue)",
+  digits = 2
+)
 ```
 
----
-
-## Performance Metrics - Scenario 1
+## Average Waiting Time (3 Triage Doctors)
 
 ```{r}
 
-# Key performance metrics
-avg_wait_1 <- mean(sim1$Wait_Time)
-avg_system_1 <- mean(sim1$System_Time)
-max_wait_1 <- max(sim1$Wait_Time)
-pct_exceed_1 <- mean(sim1$Wait_Time > 10) * 100
+# Compute mean waiting time for Scenario 1 
 
-# Average Queue Length (Little's Law): L_q = Lambda * W_q
-lambda_per_min <- 12/60
-avg_queue_1 <- lambda_per_min * avg_wait_1
+mean_wait_3_docs <- mean(simulation_data$Waiting_Time) * 60
 
-cat("  SCENARIO 1: 3 Triage Doctors\n")
+# Estimate average queue length using Little’s Law (Lq = λ × Wq)
 
-cat("========================================\n")
+avg_queue_1 <- arrival_rate * mean(simulation_data$Waiting_Time)
 
-cat(sprintf("  Average Waiting Time : %.2f minutes\n", avg_wait_1))
+# Convert to minutes
 
-cat(sprintf("  Average System Time  : %.2f minutes\n", avg_system_1))
+mean_waiting_time <- mean(simulation_data$Waiting_Time) * 60
+mean_system_time <- mean(simulation_data$System_Time) * 60
 
-cat(sprintf("  Maximum Waiting Time : %.2f minutes\n", max_wait_1))
+# Average Waiting Time (3 Triage Doctors)
 
-cat(sprintf("  Average Queue Length : %.2f patients\n", avg_queue_1))
+cat(sprintf("Mean Waiting Time (minutes): %.2f\n", mean_waiting_time))
+cat(sprintf("Mean System Time (minutes): %.2f\n", mean_system_time))
 
-cat(sprintf("  %% Patients Waiting >10 min : %.1f%%\n", pct_exceed_1))
-
-cat(sprintf("  Threshold Met (<=10 min) : %s\n",
-ifelse(avg_wait_1 <= 10, "YES", "NO")))
-
-cat("========================================\n")
-```
-The simulation shows an average waiting time of 6.84 minutes, which is below the 10-minute threshold, indicating that the system does indeed meet the requirement on average.
-
-However, performance is not consistent as around 24.6% of patients wait longer than 10 minutes. The maximum waiting time reaches 52.06 minutes as well, highlighting significant variability.
-
-The average system time of 19.45 minutes and queue length of 1.37 patients suggest moderate congestion especially during peak periods.
-
-Overall, while the system meets the target on average, it operates close to capacity and may not reliably provide acceptable service for all patients.
-
----
-
-# Scenario 2: Additional Doctor (4 Triage Doctors)
-
-```{r}
-
-# Run Scenario 2 - set seed for fair comparison 
-
-sim2 <- simulate_er(n_patients = 500,
-                    arrival_rate = 12/60,
-                    service_mean = 12,
-                    n_doctors = 4,
-                    seed = 42)
-
-# Display first 10 rows
-
-knitr::kable(head(sim2, 10),
-             caption = "Scenario 2 - First 10 Patients (4 Doctors)",
-             digits = 2)
 ```
 
----
-
-## Performance Metrics - Scenario 2
+## Average Queue Length (3 Triage Doctors)
 
 ```{r}
+# Estimate Average Queue Length using Little's Law
+# Lq = λ * Wq
 
-avg_wait_2   <- mean(sim2$Wait_Time)
-avg_system_2 <- mean(sim2$System_Time)
-max_wait_2   <- max(sim2$Wait_Time)
-pct_exceed_2 <- mean(sim2$Wait_Time > 10) * 100
-avg_queue_2  <- lambda_per_min * avg_wait_2
+# Average waiting time in HOURS
+avg_wait_hours <- mean(simulation_data$Waiting_Time)
 
+# Little's Law: average number of people in queue
+avg_queue_length <- arrival_rate * avg_wait_hours
 
-cat("  SCENARIO 2: 4 Triage Doctors\n")
+# Queue Analysis - Average Queue Length 
 
-cat("========================================\n")
+cat(sprintf("Arrival Rate (λ): %.2f patients/hour\n", arrival_rate))
+cat(sprintf("Average Waiting Time (Wq): %.4f hours (%.2f minutes)\n",
+            avg_wait_hours, avg_wait_hours * 60))
 
-cat(sprintf("  Average Waiting Time  : %.2f minutes\n", avg_wait_2))
+cat(sprintf("Average Queue Length (Lq): %.2f patients\n", avg_queue_length))
 
-cat(sprintf("  Average System Time   : %.2f minutes\n", avg_system_2))
-
-cat(sprintf("  Maximum Waiting Time  : %.2f minutes\n", max_wait_2))
-
-cat(sprintf("  Average Queue Length  : %.2f patients\n", avg_queue_2))
-
-cat(sprintf("  %% Patients Waiting >10 min : %.1f%%\n", pct_exceed_2))
-
-cat(sprintf("  Threshold Met (<=10 min)   : %s\n",
-            ifelse(avg_wait_2 <= 10, "YES", "NO")))
-
-cat("========================================\n")
 ```
----
 
-# Comparative Analysis
+## Interpretation of Results
+
+The three-doctor system shows an average waiting time of 8.82 minutes, which is below the 10-minute threshold, indicating acceptable performance on average. However, the average system time of 21.45 minutes suggests that patients still spend a considerable total time in the emergency system.
+
+Using Little’s Law, the estimated average queue length is 1.76 patients, indicating that nearly two patients are typically waiting at any time. This reflects moderate congestion and shows that the system operates close to its capacity.
+
+Overall, while the system meets the waiting time requirement on average, the queue length and system time suggest limited capacity and potential vulnerability to delays under higher demand.
+
+# Scenario 2: Alternative System (4 Triage Doctors)
 
 ```{r}
+# Repeat simulation with 4 doctors
 
-# Summary table
+num_doctors_2 <- 4
 
-comparison <- data.frame(
-  Metric = c ("Number of Doctors",
-              "Average Waiting Time (min)",
-              "Average System Time (min)",
-              "Maximum Waiting Time (min)",
-              "Average Queue Length (patients)",
-              "% Patients Waiting > 10 min",
-              "10 Minute Threshold Met?"),
-  Scenario_1_3_Doctors = c(
-    3,
-    round(avg_wait_1, 2),
-    round(avg_system_1, 2),
-    round(max_wait_1, 2),
-    round(avg_queue_1, 2),
-    round(pct_exceed_1, 2),
-    ifelse(avg_wait_1 <= 10, "YES", "NO")
+# Reinitialize
+service_start2 <- numeric(n_patients)
+service_end2 <- numeric(n_patients)
+waiting_time2 <- numeric(n_patients)
+system_time2 <- numeric(n_patients)
+
+# Track availability of the 4 doctors
+doctor_available_time2 <- rep(0, num_doctors_2)
+
+# Simulation Loop (FCFS Logic)
+
+for (i in 1:n_patients) {
+  
+  next_doctor <- which.min(doctor_available_time2)
+  
+  service_start2[i] <- max(arrival_time[i], doctor_available_time2[next_doctor])
+  
+  service_end2[i] <- service_start2[i] + service_time[i]
+  
+  doctor_available_time2[next_doctor] <- service_end2[i]
+  
+  waiting_time2[i] <- service_start2[i] - arrival_time[i]
+  
+  system_time2[i] <- service_end2[i] - arrival_time[i]
+}
+
+
+# Store Results
+
+simulation_data_2 <- data.frame(
+  Waiting_Time = waiting_time2,
+  System_Time = system_time2
+)
+
+# Compute mean waiting time for Scenario 2
+mean_wait_4_docs <- mean(simulation_data_2$Waiting_Time) * 60
+
+# Estimate average queue length using Little’s Law (Lq = λ × Wq)
+avg_queue_2 <- arrival_rate * mean(simulation_data_2$Waiting_Time)
+
+# Convert to minutes for comparison
+
+mean_wait_3_docs <- mean(simulation_data$Waiting_Time) * 60
+mean_wait_4_docs <- mean(simulation_data_2$Waiting_Time) * 60
+
+# Average Waiting Time (4 Triage Doctors)
+
+cat(sprintf("4 Doctors - Mean Waiting Time (minutes): %.2f\n", mean_wait_4_docs))
+cat(sprintf("4 Doctors - Mean System Time (minutes): %.2f\n", mean(simulation_data_2$System_Time) * 60))
+
+```
+```{r}
+# Comparison table 
+
+comparison_simple <- data.frame(
+  Metric = c(
+    "Mean Waiting Time (min)",
+    "Average Queue Length (patients)",
+    "10 Minute Threshold Met?"
   ),
+  
+  Scenario_1_3_Doctors = c(
+    round(mean_wait_3_docs, 2),
+    round(avg_queue_1, 2),
+    ifelse(mean_wait_3_docs <= 10, "YES", "NO")
+  ),
+  
   Scenario_2_4_Doctors = c(
-    4,
-    round(avg_wait_2, 2),
-    round(avg_system_2, 2),
-    round(max_wait_2, 2),
+    round(mean_wait_4_docs, 2),
     round(avg_queue_2, 2),
-    round(pct_exceed_2, 2),
-    ifelse(avg_wait_2 <= 10, "YES", "NO")
+    ifelse(mean_wait_4_docs <= 10, "YES", "NO")
   )
 )
 
-knitr::kable(comparison, 
-              col.names = c("Metric", "Scenario 1 (3 Doctors)", "Scenario 2 (4 Doctors"),
-              caption = "Comparison of Key Performance Metrics Across Scenarios")
+knitr::kable(
+  comparison_simple,
+  col.names = c("Metric", "3 Doctors", "4 Doctors"),
+  caption = "Key Performance Comparison: 3 vs 4 Doctors"
+)
 ```
 
-## Comparison
+# Comparison and Justification
 
-The comparison between the two scenarios clearly demonstrates the impact of increasing the number of triage doctors from three to four on system performance. In scenario 1, with three doctors, the average waiting time is 6.84 minutes, while in Scenario 2 this reduces significantly to 1.24 minutes.Similarly, the average system time decreases from 19.45 minutes to 13.86 minutes, indicating improved efficiency in patient processing.
+The results clearly show a significant improvement when the number of doctors is increased from three to four. The mean waiting time drops sharply from 8.82 minutes to 1.85 minutes, indicating a substantial reduction in patient delay before receiving treatment. Similarly, the average queue length decreases from 1.37 to 0.25 patients, showing that congestion in the system is almost eliminated with the additional doctor.
 
-Queue-related performance also improves considerably. The average queue length drops from 1.37 patients in Scenario 1 to just 0.25 patients in Scenario 2, showing a major reduction in congestion within the system. Furthermore, the maximum waiting time decreases sharply from 52.06 minutes to 17.55 minutes, highlighting a reduction in extreme delays. The proportion of patients waiting more than 10 minutes also falls substantially from 24.6% to 3.6%, demonstrating a more consistent service experience in the improved system.
+In terms of the hospital’s mandated requirement, both scenarios satisfy the condition that the average waiting time must be below 10 minutes. However, the three-doctor system is operating much closer to the threshold, meaning it is more sensitive to fluctuations in demand. In contrast, the four-doctor system provides a much larger safety margin, with waiting times well below the limit.
 
----
-
-# Conclusion
-
-Although both scenarios satisfy the hospital’s requirement of an average waiting time below 10 minutes, the four-doctor configuration provides significantly better performance across all key metrics. It not only reduces average delays but also improves system stability by minimising long waits and queue buildup.
-
-In conclusion, while the three-doctor system is marginally adequate in meeting the average performance target, it is less reliable due to higher variability and a greater proportion of delayed patients. The addition of a fourth doctor results in a much more efficient and stable system, making it the preferred configuration for handling peak demand in the emergency room.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Therefore, while both configurations technically meet the requirement, the addition of the fourth doctor significantly improves system performance and stability. It reduces both waiting time and queue length, making the system more robust and better suited for handling peak weekend demand.
