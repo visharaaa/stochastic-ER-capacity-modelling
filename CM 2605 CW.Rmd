@@ -285,7 +285,19 @@ knitr::kable(comparison,
               caption = "Comparison of Key Performance Metrics Across Scenarios")
 ```
 
+## Comparison
 
+The comparison between the two scenarios clearly demonstrates the impact of increasing the number of triage doctors from three to four on system performance. In scenario 1, with three doctors, the average waiting time is 6.84 minutes, while in Scenario 2 this reduces significantly to 1.24 minutes.Similarly, the average system time decreases from 19.45 minutes to 13.86 minutes, indicating improved efficiency in patient processing.
+
+Queue-related performance also improves considerably. The average queue length drops from 1.37 patients in Scenario 1 to just 0.25 patients in Scenario 2, showing a major reduction in congestion within the system. Furthermore, the maximum waiting time decreases sharply from 52.06 minutes to 17.55 minutes, highlighting a reduction in extreme delays. The proportion of patients waiting more than 10 minutes also falls substantially from 24.6% to 3.6%, demonstrating a more consistent service experience in the improved system.
+
+---
+
+# Conclusion
+
+Although both scenarios satisfy the hospital’s requirement of an average waiting time below 10 minutes, the four-doctor configuration provides significantly better performance across all key metrics. It not only reduces average delays but also improves system stability by minimising long waits and queue buildup.
+
+In conclusion, while the three-doctor system is marginally adequate in meeting the average performance target, it is less reliable due to higher variability and a greater proportion of delayed patients. The addition of a fourth doctor results in a much more efficient and stable system, making it the preferred configuration for handling peak demand in the emergency room.
 
 
 
