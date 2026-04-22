@@ -268,4 +268,4 @@ The results clearly show a significant improvement when the number of doctors is
 
 In terms of the hospital’s mandated requirement, both scenarios satisfy the condition that the average waiting time must be below 10 minutes. However, the three-doctor system is operating much closer to the threshold, meaning it is more sensitive to fluctuations in demand. In contrast, the four-doctor system provides a much larger safety margin, with waiting times well below the limit.
 
-Therefore, while both configurations technically meet the requirement, the addition of the fourth doctor significantly improves system performance and stability. It reduces both waiting time and queue length, making the system more robust and better suited for handling peak weekend demand.
+Therefore, while both configurations technically do meet the requirement, the addition of the fourth doctor significantly improves system performance and stability. It reduces both waiting time and queue length, making the system more robust and better suited for handling peak weekend demand.
